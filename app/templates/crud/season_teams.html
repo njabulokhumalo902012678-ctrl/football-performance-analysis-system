@@ -1,0 +1,7 @@
+{% extends 'base.html' %}{% from '_macros.html' import csrf %}
+{% block body %}
+<div class="head"><div><h1>{{ s.comp }} {{ s.name }}</h1><p class="sub">Participating teams</p></div></div>
+<div class="card"><div class="cb"><form method="post">{{ csrf() }}
+{% for t in teams %}<label style="font-weight:400"><input type="checkbox" name="team" value="{{ t.id }}" {{ 'checked' if t.id in chosen }} {{ '' if can_edit else 'disabled' }}>{{ t.name }}{% if t.club and t.club != t.name %} <span class="muted">({{ t.club }})</span>{% endif %}</label>{% endfor %}
+{% if can_edit %}<p><button class="btn green">Save teams</button></p>{% endif %}</form></div></div>
+{% endblock %}

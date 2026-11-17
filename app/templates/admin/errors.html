@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="head"><h1>Error log</h1></div>
+{% for e in rows %}<div class="card"><div class="ch">{{ e.created_at|dt }} - {{ e.path }} <span>{{ e.full_name or 'anonymous' }}</span></div><div class="cb"><b>{{ e.message }}</b><details><summary class="muted">Technical trace</summary><pre style="white-space:pre-wrap;font-size:.75rem">{{ e.trace }}</pre></details></div></div>
+{% else %}<div class="card"><div class="cb muted">No errors recorded.</div></div>{% endfor %}
+{% endblock %}

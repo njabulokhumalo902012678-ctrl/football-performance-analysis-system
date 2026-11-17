@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="head"><div><h1>Metric definitions</h1><p class="sub">Every statistic comes from a documented formula.</p></div></div>
+<div class="card"><div class="ch">Formula self-test against known examples <span class="badge {{ 'ok' if passed==total else 'bad' }}">{{ passed }} / {{ total }} passed</span></div><div class="tw"><table>
+{% for name, ok, detail in results %}<tr><td>{{ '&#10003;'|safe if ok else '&#10007;'|safe }}</td><td>{{ name }}</td><td class="muted">{{ detail }}</td></tr>{% endfor %}</table></div></div>
+<div class="card"><div class="tw"><table><tr><th>Code</th><th>Name</th><th>Applies to</th><th>Needs category</th><th>Formula</th></tr>
+{% for d in defs %}<tr><td><code>{{ d.code }}</code></td><td>{{ d.name }}</td><td>{{ d.subject_scope }}</td><td>{{ d.scope_category or '-' }}</td><td>{{ d.formula }}{% if d.test_example %}<br><span class="muted">Example: {{ d.test_example }}</span>{% endif %}</td></tr>{% endfor %}</table></div></div>
+{% endblock %}

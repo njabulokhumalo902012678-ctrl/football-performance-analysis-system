@@ -1,0 +1,7 @@
+{% extends 'base.html' %}{% from '_macros.html' import csrf %}
+{% block body %}
+<div class="head"><h1>Client requests and feedback</h1></div>
+{% for r in rows %}<div class="card"><div class="ch">{{ r.client }} - {{ r.kind|label }}: {{ r.subject }} <span>{{ r.status|badge }}</span></div><div class="cb"><p>{{ r.message }}</p><p class="muted">{{ r.who }}, {{ r.created_at|dt }}</p>
+{% if r.response %}<div class="infobox"><b>Response:</b> {{ r.response }}</div>{% elif can_respond %}<form method="post" action="{{ url_for('business.request_respond', rid=r.id) }}">{{ csrf() }}<div class="fld"><textarea name="response" rows="2" required placeholder="Reply to the client"></textarea></div><button class="btn sm green">Send response</button></form>{% endif %}</div></div>
+{% else %}<div class="card"><div class="cb muted">No requests yet.</div></div>{% endfor %}
+{% endblock %}

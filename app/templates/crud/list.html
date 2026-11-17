@@ -1,0 +1,22 @@
+{% extends 'base.html' %}{% from '_macros.html' import post_btn %}
+{% block body %}
+<div class="head"><div><h1>{{ e.title }}</h1><p class="sub">{{ total }} record{{ '' if total==1 else 's' }}</p></div>
+<div class="actions">{% if can_export %}<a class="btn ghost" href="{{ url_for('crud.export', name=e.slug) }}">Export CSV</a>{% endif %}{% if can_edit %}<a class="btn green" href="{{ url_for('crud.create', name=e.slug) }}">Add {{ e.singular|lower }}</a>{% endif %}</div></div>
+<form class="toolbar" method="get"><input type="text" name="q" value="{{ term }}" placeholder="Search">
+{% if filter_opts %}<select name="filter"><option value="">All</option>{% for v,l in filter_opts %}<option value="{{ v }}" {{ 'selected' if fv==v }}>{{ l }}</option>{% endfor %}</select>{% endif %}
+<button class="btn ghost">Filter</button></form>
+<div class="card"><div class="tw"><table><tr>{% for c in e.cols %}<th>{{ fields[c].label if c in fields else c }}</th>{% endfor %}<th></th></tr>
+{% for r in rows %}<tr>
+{% for c in e.cols %}<td>{% set f = fields.get(c) %}
+ {% if loop.first and e.detail %}<a href="{{ url_for(e.detail, **({'pid':r.id} if e.slug=='players' else {'sid':r.id} if e.slug=='seasons' else {'cid':r.id} if e.slug=='clients' else {'lid':r.id})) }}">{{ r[c] }}</a>
+ {% elif f and f.type=='fk' %}{{ r[c ~ '__lbl'] or '-' }}
+ {% elif f and f.type=='bool' %}{{ 'Yes' if r[c] else 'No' }}
+ {% elif c in ('amount','unit_price','budget') %}{{ r[c]|money }}
+ {% elif c in ('status','verification_status','agreement_status','permission_status') %}{{ r[c]|badge }}
+ {% elif f and f.type=='select' %}{{ r[c]|label }}
+ {% else %}{{ r[c] if r[c] not in (none,'') else '-' }}{% endif %}</td>{% endfor %}
+<td style="white-space:nowrap">{% if e.detail and not loop.first %}{% endif %}{% if can_edit %}<a class="btn sm ghost" href="{{ url_for('crud.edit', name=e.slug, rid=r.id) }}">Edit</a>
+ {{ post_btn(url_for('crud.delete', name=e.slug, rid=r.id), 'Delete', 'btn sm danger', 'Delete this record? This cannot be undone.') }}{% endif %}</td></tr>
+{% else %}<tr><td colspan="{{ e.cols|length + 1 }}" class="muted">No records yet.{% if can_edit %} Use "Add {{ e.singular|lower }}" to create the first one.{% endif %}</td></tr>{% endfor %}</table></div></div>
+{% if total > per %}<p>Page {{ page }} of {{ ((total + per - 1) // per) }} {% if page>1 %}<a href="?page={{ page-1 }}&q={{ term }}&filter={{ fv }}">Previous</a>{% endif %} {% if page*per<total %}<a href="?page={{ page+1 }}&q={{ term }}&filter={{ fv }}">Next</a>{% endif %}</p>{% endif %}
+{% endblock %}

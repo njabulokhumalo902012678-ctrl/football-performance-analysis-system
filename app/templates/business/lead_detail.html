@@ -1,0 +1,7 @@
+{% extends 'base.html' %}{% from '_macros.html' import csrf %}
+{% block body %}
+<div class="head"><div><h1>{{ l.name }}</h1><p class="sub">{{ l.org_type or '' }} &middot; {{ l.status|badge }} &middot; Owner: {{ l.owner or '-' }} &middot; Next follow-up: {{ l.next_followup or '-' }}</p></div>
+<div class="actions"><a class="btn ghost" href="{{ url_for('crud.edit', name='leads', rid=l.id) }}">Edit</a>{% if not l.converted_client_id and has_perm('clients.manage') %}<form method="post" action="{{ url_for('business.lead_convert', lid=l.id) }}" data-confirm="Convert to a client?">{{ csrf() }}<button class="btn green">Convert to client</button></form>{% endif %}</div></div>
+<div class="card"><h2>Contact history</h2><div class="cb">{% for h in history %}<p style="margin:0 0 6px"><b>{{ h.contact_date }}</b> ({{ h.channel }}) {{ h.summary }} <span class="muted">- {{ h.full_name }}</span></p>{% else %}<p class="muted">No contact recorded.</p>{% endfor %}
+<hr class="sep"><form method="post" action="{{ url_for('business.lead_contact', lid=l.id) }}">{{ csrf() }}<div class="ff"><div class="fld"><label>Channel</label><select name="channel">{% for ch in channels %}<option>{{ ch }}</option>{% endfor %}</select></div><div class="fld"><label>Next follow-up</label><input type="date" name="next_followup"></div></div><div class="fld"><textarea name="summary" rows="2" required></textarea></div><button class="btn sm">Record contact</button></form></div></div>
+{% endblock %}

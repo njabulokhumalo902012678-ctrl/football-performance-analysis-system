@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="head"><div><h1>Match analysis</h1><p class="sub">Statistics are calculated from validated data.</p></div></div>
+<div class="card"><div class="tw"><table><tr><th>Match</th><th>Date</th><th>Score</th><th>Status</th><th>Runs</th><th></th></tr>
+{% for m in rows %}<tr><td><b>{{ m.home }} v {{ m.away }}</b><br><span class="muted">{{ m.match_code }}</span></td><td>{{ m.kickoff|ldt }}</td><td>{{ (m.home_score ~ ' - ' ~ m.away_score) if m.home_score is not none else '-' }}</td><td>{{ m.status|badge }}</td><td>{{ m.runs }}</td><td><a class="btn sm green" href="{{ url_for('analysis.match_view', mid=m.id) }}">Open</a></td></tr>
+{% else %}<tr><td colspan="6" class="muted">No matches with data yet.</td></tr>{% endfor %}</table></div></div>
+{% endblock %}

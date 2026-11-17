@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="head"><div><h1>Video library</h1><p class="sub">Footage is internal-only unless permission has been recorded.</p></div>{% if can_manage %}<a class="btn green" href="{{ url_for('scouting.video_new') }}">Register video</a>{% endif %}</div>
+<div class="card"><div class="tw"><table><tr><th>Title</th><th>Match</th><th>Permission</th><th>Access</th><th>Clips</th></tr>
+{% for v in rows %}<tr><td><a href="{{ url_for('scouting.video_detail', vid=v.id) }}">{{ v.title }}</a></td><td>{{ v.match_code or '-' }}</td><td>{{ v.permission_status|badge }}</td><td>{{ v.access_restriction|label }}</td><td>{{ v.clips }}</td></tr>{% else %}<tr><td colspan="5" class="muted">No video registered yet.</td></tr>{% endfor %}</table></div></div>
+{% endblock %}

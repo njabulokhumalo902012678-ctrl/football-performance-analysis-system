@@ -1,0 +1,16 @@
+{% extends 'base.html' %}{% from '_macros.html' import csrf %}
+{% block body %}
+<div class="head"><div><h1>{{ v.title }}</h1><p class="sub">{{ v.match_code or 'No match linked' }} &middot; {{ v.permission_status|badge }} &middot; {{ v.access_restriction|label }}</p></div></div>
+{% if v.permission_status!='permitted' %}<div class="warnbox">Permission is <b>{{ v.permission_status|label }}</b>. This footage cannot be referenced in client reports until permission is recorded as permitted and access set to client-shareable.</div>{% endif %}
+<div class="grid g2"><div class="card"><h2>Video</h2><div class="cb">
+{% if playable %}<video controls style="width:100%;max-height:60vh" src="{{ url_for('scouting.video_file', vid=v.id) }}"></video>{% endif %}
+{% if v.reference %}<p>Reference: {{ v.reference }}</p>{% endif %}<p class="muted">{{ v.licence_notes }}</p></div></div>
+<div class="card"><h2>Permission</h2><div class="cb">{% if can_manage %}<form method="post" action="{{ url_for('scouting.video_permission', vid=v.id) }}">{{ csrf() }}
+<div class="fld"><label>Permission status</label><select name="permission_status">{% for p in C.VIDEO_PERMISSIONS %}<option value="{{ p }}" {{ 'selected' if p==v.permission_status }}>{{ p|label }}</option>{% endfor %}</select></div>
+<div class="fld"><label>Access</label><select name="access_restriction">{% for p in ['internal_only','client_shareable'] %}<option value="{{ p }}" {{ 'selected' if p==v.access_restriction }}>{{ p|label }}</option>{% endfor %}</select></div><button class="btn sm">Update</button></form>{% else %}<p>{{ v.permission_status|label }}</p>{% endif %}</div></div></div>
+<div class="card"><h2>Clips and tags</h2><div class="tw"><table><tr><th>Start</th><th>End</th><th>Event</th><th>Player</th><th>Notes</th><th></th></tr>
+{% for c in clips %}<tr><td>{{ c.start_seconds }}s</td><td>{{ c.end_seconds or '-' }}</td><td>{{ c.event_category|label }}</td><td>{{ c.player or '-' }}</td><td>{{ c.notes or '' }}</td><td>{% if can_manage %}<form method="post" action="{{ url_for('scouting.clip_delete', cid=c.id) }}" data-confirm="Delete clip?">{{ csrf() }}<button class="btn sm danger">Delete</button></form>{% endif %}</td></tr>{% else %}<tr><td colspan="6" class="muted">No clips tagged.</td></tr>{% endfor %}</table></div>
+{% if can_manage %}<div class="cb"><form method="post" action="{{ url_for('scouting.clip_add', vid=v.id) }}"><div class="ff"><div class="fld"><label>Start (s)</label><input type="number" min="0" name="start_seconds" required></div><div class="fld"><label>End (s)</label><input type="number" min="0" name="end_seconds"></div>
+<div class="fld"><label>Event</label><select name="event_category">{% for c in categories %}<option value="{{ c }}">{{ c|label }}</option>{% endfor %}</select></div>
+<div class="fld"><label>Player</label><select name="player_id"><option value="">-</option>{% for p in players %}<option value="{{ p.id }}">{{ p.full_name }}</option>{% endfor %}</select></div><div class="fld"><label>Tags</label><input type="text" name="tags"></div><div class="fld"><label>Notes</label><input type="text" name="notes"></div></div>{{ csrf() }}<button class="btn sm green">Add clip</button></form></div>{% endif %}</div>
+{% endblock %}

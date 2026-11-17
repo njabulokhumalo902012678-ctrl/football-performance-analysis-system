@@ -1,0 +1,29 @@
+{% macro field(f, row, form, errs) %}
+{% set val = form_value(f, row, form) %}
+<div class="fld {{ 'err' if errs.get(f.name) }} {{ 'full' if f.type=='textarea' }}">
+  {% if f.type=='bool' %}
+    <label><input type="checkbox" name="{{ f.name }}" value="1" {{ 'checked' if (val in (1,'1','on',True)) }}>{{ f.label }}</label>
+  {% else %}
+    <label for="f_{{ f.name }}">{{ f.label }}{% if f.req %} *{% endif %}</label>
+    {% if f.type=='textarea' %}<textarea id="f_{{ f.name }}" name="{{ f.name }}" rows="{{ f.rows }}">{{ val or '' }}</textarea>
+    {% elif f.type in ('select','fk') %}
+      <select id="f_{{ f.name }}" name="{{ f.name }}">
+        <option value="">{{ '- choose -' if f.req else '- none -' }}</option>
+        {% for v,l in f.choices() %}<option value="{{ v }}" {{ 'selected' if (val|string)==(v|string) }}>{{ l }}</option>{% endfor %}
+      </select>
+    {% elif f.type=='int' %}<input id="f_{{ f.name }}" type="number" step="1" name="{{ f.name }}" value="{{ val if val is not none else '' }}">
+    {% elif f.type=='number' %}<input id="f_{{ f.name }}" type="number" step="{{ f.step or 'any' }}" name="{{ f.name }}" value="{{ val if val is not none else '' }}">
+    {% elif f.type=='date' %}<input id="f_{{ f.name }}" type="date" name="{{ f.name }}" value="{{ val or '' }}">
+    {% elif f.type=='datetime' %}<input id="f_{{ f.name }}" type="datetime-local" name="{{ f.name }}" value="{{ val or '' }}">
+    {% elif f.type=='email' %}<input id="f_{{ f.name }}" type="email" name="{{ f.name }}" value="{{ val or '' }}">
+    {% elif f.type=='url' %}<input id="f_{{ f.name }}" type="url" name="{{ f.name }}" value="{{ val or '' }}">
+    {% else %}<input id="f_{{ f.name }}" type="text" name="{{ f.name }}" value="{{ val or '' }}">{% endif %}
+  {% endif %}
+  {% if f.help %}<div class="help">{{ f.help }}</div>{% endif %}
+  {% if errs.get(f.name) %}<div class="em">{{ errs[f.name] }}</div>{% endif %}
+</div>
+{% endmacro %}
+{% macro csrf() %}<input type="hidden" name="_csrf" value="{{ csrf_token() }}">{% endmacro %}
+{% macro post_btn(url, label, cls='btn sm', confirm=None, extra='') %}
+<form method="post" action="{{ url }}" style="display:inline" {% if confirm %}data-confirm="{{ confirm }}"{% endif %}>{{ csrf() }}{{ extra|safe }}<button class="{{ cls }}">{{ label }}</button></form>
+{% endmacro %}

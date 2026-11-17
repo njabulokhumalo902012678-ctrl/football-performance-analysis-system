@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="head"><h1>Marketing summary</h1><div class="actions"><a class="btn ghost" href="{{ url_for('crud.list_view', name='leads') }}">Prospects</a><a class="btn ghost" href="{{ url_for('crud.list_view', name='campaigns') }}">Campaigns</a></div></div>
+<div class="grid g2"><div class="card"><h2>Lead pipeline</h2><div class="tw"><table>{% for p in pipeline %}<tr><td>{{ p.status|badge }}</td><td class="num">{{ p.n }}</td></tr>{% else %}<tr><td class="muted">No leads.</td></tr>{% endfor %}</table></div></div>
+<div class="card"><h2>Follow-ups due</h2><div class="tw"><table>{% for l in due %}<tr><td><a href="{{ url_for('business.lead_detail', lid=l.id) }}">{{ l.name }}</a></td><td>{{ l.next_followup }}</td></tr>{% else %}<tr><td class="muted">None due.</td></tr>{% endfor %}</table></div></div>
+<div class="card"><h2>Campaigns</h2><div class="tw"><table>{% for c in campaigns %}<tr><td>{{ c.name }}</td><td>{{ c.channel or '-' }}</td><td>{{ c.status|badge }}</td></tr>{% else %}<tr><td class="muted">None.</td></tr>{% endfor %}</table></div></div>
+<div class="card"><h2>Customer feedback</h2><div class="cb">{% for f in feedback %}<p><b>{{ f.client }}:</b> {{ f.message }}</p>{% else %}<p class="muted">No feedback yet.</p>{% endfor %}</div></div></div>
+{% endblock %}

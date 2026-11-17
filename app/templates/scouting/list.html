@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="head"><div><h1>Scouting reports</h1></div>{% if can_manage %}<a class="btn green" href="{{ url_for('scouting.scouting_new') }}">New scouting record</a>{% endif %}</div>
+<div class="card"><div class="tw"><table><tr><th>Player</th><th>Role</th><th>Sample</th><th>Confidence</th><th>Analyst</th><th>Status</th></tr>
+{% for s in rows %}<tr><td><a href="{{ url_for('scouting.scouting_detail', sid=s.id) }}">{{ s.player }}</a></td><td>{{ s.position_role or '-' }}</td><td>{{ s.sample }} match(es)</td><td>{{ s.confidence|label }}</td><td>{{ s.analyst or '-' }}</td><td>{{ s.review_status|badge }}</td></tr>{% else %}<tr><td colspan="6" class="muted">No scouting records yet.</td></tr>{% endfor %}</table></div></div>
+{% endblock %}

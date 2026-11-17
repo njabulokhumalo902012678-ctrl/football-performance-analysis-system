@@ -1,0 +1,11 @@
+{% extends 'base.html' %}{% from '_macros.html' import csrf %}
+{% block body %}
+<div class="head"><h1>{{ 'Edit' if u else 'Add' }} employee</h1></div>
+<div class="card"><div class="cb"><form method="post">{{ csrf() }}<div class="ff">
+<div class="fld"><label>Full name *</label><input type="text" name="full_name" value="{{ form.get('full_name') if form else (u.full_name if u else '') }}" required></div>
+<div class="fld"><label>Email *</label><input type="email" name="email" value="{{ form.get('email') if form else (u.email if u else '') }}" required></div>
+<div class="fld"><label>Username *</label><input type="text" name="username" value="{{ form.get('username') if form else (u.username if u else '') }}" required></div>
+{% if not u %}<div class="fld"><label>Initial password *</label><input type="password" name="password" autocomplete="new-password"><div class="help">10+ characters with upper, lower and a number. The employee must change it at first sign-in.</div></div>{% endif %}</div>
+<div class="fld"><label>Roles *</label>{% for r in roles %}<label style="font-weight:400"><input type="checkbox" name="roles" value="{{ r.id }}" {{ 'checked' if r.id in cur }}><b>{{ r.name }}</b> <span class="muted">- {{ r.description }}</span></label>{% endfor %}</div>
+<button class="btn green">Save</button> <a class="btn ghost" href="{{ url_for('admin.users') }}">Cancel</a></form></div></div>
+{% endblock %}

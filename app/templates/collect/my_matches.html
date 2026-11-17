@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="head"><div><h1>My collection assignments</h1><p class="sub">Open a match to record events from your phone.</p></div></div>
+<div class="card"><div class="tw"><table><tr><th>Match</th><th>Kick-off</th><th>Role</th><th>Status</th><th>Events</th><th></th></tr>
+{% for r in rows %}<tr><td><b>{{ r.home }} v {{ r.away }}</b><br><span class="muted">{{ r.match_code }}</span></td><td>{{ r.kickoff|ldt }}</td><td>{{ r.assignment_role|label }}</td><td>{{ r.status|badge }}</td><td>{{ r.n_events }}</td><td><a class="btn sm green" href="{{ url_for('collect.entry', mid=r.id) }}">Open</a></td></tr>
+{% else %}<tr><td colspan="6" class="muted">You have no collection assignments.</td></tr>{% endfor %}</table></div></div>
+{% endblock %}

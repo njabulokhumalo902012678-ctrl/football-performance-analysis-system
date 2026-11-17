@@ -1,0 +1,2 @@
+team,player,event_type,period,minute,second,outcome,related_player,set_piece_type,x_start,y_start,x_end,y_end,video_timestamp,notes
+Rudimentary FC,Siza Mahlangu,shot,1H,12,30,on_target,,,88,50,,,,example row - delete

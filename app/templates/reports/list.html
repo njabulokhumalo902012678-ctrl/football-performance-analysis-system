@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="head"><div><h1>Reports</h1><p class="sub">Create, review, approve and deliver client reports.</p></div>
+{% if can_create %}<div class="actions">{% for k,l in types.items() %}<a class="btn {{ 'green' if k=='player' else 'ghost' }}" href="{{ url_for('reports.create', type=k) }}">New {{ k }}</a>{% endfor %}</div>{% endif %}</div>
+<form class="toolbar" method="get"><select name="type"><option value="">All types</option>{% for k,l in types.items() %}<option value="{{ k }}" {{ 'selected' if ty==k }}>{{ l }}</option>{% endfor %}</select>
+<select name="status"><option value="">All statuses</option>{% for s in ['draft','under_review','returned','approved','delivered','withdrawn'] %}<option value="{{ s }}" {{ 'selected' if st==s }}>{{ s|label }}</option>{% endfor %}</select><button class="btn ghost">Filter</button></form>
+<div class="card"><div class="tw"><table><tr><th>Report</th><th>Type</th><th>Client</th><th>Author</th><th>Version</th><th>Status</th><th>Updated</th></tr>
+{% for r in rows %}<tr><td><a href="{{ url_for('reports.detail', rid=r.id) }}">{{ r.title }}</a>{% if r.data_status=='provisional' %} <span class="badge warn">provisional</span>{% endif %}</td><td>{{ r.report_type|label }}</td><td>{{ r.client or '-' }}</td><td>{{ r.author }}</td><td>{{ r.current_version or '-' }}</td><td>{{ r.status|badge }}</td><td>{{ r.updated_at|dt }}</td></tr>
+{% else %}<tr><td colspan="7" class="muted">No reports found.</td></tr>{% endfor %}</table></div></div>
+{% endblock %}

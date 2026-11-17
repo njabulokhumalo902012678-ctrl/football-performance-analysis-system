@@ -1,0 +1,12 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sign in - {{ company_name }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}"><link rel="icon" href="{{ url_for('static', filename='img/logo.svg') }}"></head>
+<body><div class="login"><div class="box">
+<div style="background:var(--navy);border-radius:50%;width:76px;height:76px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center"><img src="{{ url_for('static', filename='img/logo.svg') }}" alt="" style="margin:0;width:56px"></div>
+<h1>{{ company_name }}</h1><p class="sub">{{ company_tagline }}</p>
+{% with msgs = get_flashed_messages(with_categories=true) %}{% for c,m in msgs %}<div class="flash {{ c }}">{{ m }}</div>{% endfor %}{% endwith %}
+<form method="post"><input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+<div class="fld"><label for="identifier">Username or email</label><input id="identifier" name="identifier" type="text" autocomplete="username" required autofocus></div>
+<div class="fld"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required></div>
+<button class="btn" style="width:100%">Sign in</button></form>
+<p style="text-align:center;margin-top:14px"><a href="{{ url_for('auth.forgot') }}">Forgot your password?</a></p>
+</div></div></body></html>

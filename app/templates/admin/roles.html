@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="head"><div><h1>Roles and permissions</h1><p class="sub">Access is controlled by role. Permissions are assigned in code and seeded to the database.</p></div></div>
+<div class="card"><div class="tw"><table><tr><th>Permission</th>{% for r in roles %}<th style="white-space:normal;min-width:84px">{{ r.name }}</th>{% endfor %}</tr>
+{% for p in perms %}<tr><td><code>{{ p.code }}</code><br><span class="muted" style="font-size:.78rem">{{ p.description }}</span></td>{% for r in roles %}<td style="text-align:center">{{ '&#10003;'|safe if (r.id, p.id) in grants else '' }}</td>{% endfor %}</tr>{% endfor %}</table></div></div>
+{% endblock %}

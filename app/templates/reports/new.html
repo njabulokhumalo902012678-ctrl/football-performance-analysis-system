@@ -1,0 +1,14 @@
+{% extends 'base.html' %}{% from '_macros.html' import csrf %}
+{% block body %}
+<div class="head"><h1>New {{ types[rtype]|lower }}</h1></div>
+<div class="toolbar">{% for k,l in types.items() %}<a class="pill {{ 'on' if k==rtype }}" href="?type={{ k }}">{{ l }}</a>{% endfor %}</div>
+<div class="card"><div class="cb"><form method="post">{{ csrf() }}<input type="hidden" name="type" value="{{ rtype }}">
+{% if rtype=='player' %}<div class="fld"><label>Search</label><input type="text" id="pairfilter" placeholder="Type a player name or match code"></div>
+<div class="fld"><label for="pair">Player and match *</label><select id="pair" name="pair" size="8" required style="height:auto">{% for p in pairs %}<option value="{{ p.match_id }}:{{ p.player_id }}">{{ p.full_name }} - {{ p.match_code }}</option>{% endfor %}</select></div>
+{% elif rtype in ('match','team') %}<div class="fld"><label for="match_id">Match *</label><select id="match_id" name="match_id" required><option value="">- choose -</option>{% for m in matches %}<option value="{{ m.id }}">{{ m.match_code }}: {{ m.h }} v {{ m.a }} ({{ m.status|label }})</option>{% endfor %}</select></div>
+{% if rtype=='team' %}<div class="fld"><label>Team the report is for *</label><select name="team_id" required><option value="">- choose -</option>{% for m in matches %}<option value="{{ m.home_team_id }}">{{ m.match_code }}: {{ m.h }}</option><option value="{{ m.away_team_id }}">{{ m.match_code }}: {{ m.a }}</option>{% endfor %}</select><div class="help">Team reports focus on one team's own performance; the opponent's statistics are not shown.</div></div>{% endif %}
+{% else %}<div class="fld"><label>Scouting record *</label><select name="scouting_id" required><option value="">- choose -</option>{% for s in scouts %}<option value="{{ s.id }}">{{ s.full_name }} ({{ s.observation_date or 'no date' }}, {{ s.review_status }})</option>{% endfor %}</select></div>{% endif %}
+<div class="fld"><label>Client</label><select name="client_id"><option value="">- choose later -</option>{% for c in clients %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></div>
+{% if rtype!='scouting' %}<div class="fld"><label style="font-weight:400"><input type="checkbox" name="allow_provisional" value="1">Allow provisional (unvalidated) data - the report will be clearly marked PROVISIONAL</label></div>{% endif %}
+<button class="btn green">Create draft</button> <a class="btn ghost" href="{{ url_for('reports.list_view') }}">Cancel</a></form></div></div>
+{% endblock %}

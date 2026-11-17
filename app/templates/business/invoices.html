@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="head"><h1>Invoices</h1>{% if can_manage %}<a class="btn green" href="{{ url_for('business.invoice_new') }}">New invoice</a>{% endif %}</div>
+<div class="toolbar">{% for k,l in [('','All'),('outstanding','Outstanding'),('draft','Draft'),('paid','Paid'),('void','Void')] %}<a class="pill {{ 'on' if st==k }}" href="?status={{ k }}">{{ l }}</a>{% endfor %}</div>
+<div class="card"><div class="tw"><table><tr><th>Number</th><th>Client</th><th>Issued</th><th>Due</th><th>Status</th><th class="num">Total</th><th class="num">Balance</th></tr>
+{% for i in rows %}<tr><td><a href="{{ url_for('business.invoice_detail', iid=i.id) }}">{{ i.invoice_number }}</a></td><td>{{ i.client }}</td><td>{{ i.issue_date }}</td><td>{{ i.due_date }}</td><td>{{ i.status|badge }}{% if i.status in ('sent','partial') and i.due_date < today and i.balance > 0.004 %} <span class="badge bad">overdue</span>{% endif %}</td><td class="num">{{ i.total|money }}</td><td class="num">{{ i.balance|money }}</td></tr>{% else %}<tr><td colspan="7" class="muted">No invoices.</td></tr>{% endfor %}</table></div></div>
+{% endblock %}

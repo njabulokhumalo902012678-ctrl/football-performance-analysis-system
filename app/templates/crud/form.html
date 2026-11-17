@@ -1,0 +1,8 @@
+{% extends 'base.html' %}{% from '_macros.html' import field, csrf %}
+{% block body %}
+<div class="head"><h1>{{ 'Edit' if row else 'Add' }} {{ e.singular|lower }}</h1></div>
+{% if errs %}<div class="errbox">Please fix the highlighted fields.</div>{% endif %}
+<div class="card"><div class="cb"><form method="post">{{ csrf() }}<div class="ff">
+{% for f in e.fields %}{{ field(f, row, form, errs) }}{% endfor %}</div>
+<button class="btn green">Save {{ e.singular|lower }}</button> <a class="btn ghost" href="{{ url_for('crud.list_view', name=e.slug) }}">Cancel</a></form></div></div>
+{% endblock %}

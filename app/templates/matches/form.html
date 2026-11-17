@@ -1,0 +1,12 @@
+{% extends 'base.html' %}{% from '_macros.html' import field, csrf %}
+{% block body %}
+<div class="head"><h1>{{ 'Edit fixture ' ~ m.match_code if m else 'New fixture' }}</h1></div>
+{% if errs %}<div class="errbox">Please fix the highlighted fields.</div>{% endif %}
+<form method="post">{{ csrf() }}
+<div class="card"><h2>Match details</h2><div class="cb"><div class="ff">{% for f in fields if not f.name.startswith('as_') %}{{ field(f, m, form, errs) }}{% endfor %}</div></div></div>
+<div class="card"><h2>Assignments</h2><div class="cb"><div class="ff">
+{% for f in fields if f.name.startswith('as_') %}{% set role = f.name[3:] %}
+<div class="fld"><label for="f_{{ f.name }}">{{ f.label }}</label><select id="f_{{ f.name }}" name="{{ f.name }}"><option value="">- none -</option>
+{% for v,l in f.choices() %}<option value="{{ v }}" {{ 'selected' if ((form[f.name] if form else cur_assign.get(role))|string)==(v|string) }}>{{ l }}</option>{% endfor %}</select></div>{% endfor %}</div></div></div>
+<button class="btn green">Save fixture</button> <a class="btn ghost" href="{{ url_for('matches.list_view') }}">Cancel</a></form>
+{% endblock %}

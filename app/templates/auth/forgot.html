@@ -1,0 +1,4 @@
+{% from '_macros.html' import csrf %}
+{% extends 'base.html' %}{% block body %}<div class="card" style="max-width:460px"><h2>Reset your password</h2><div class="cb">
+<form method="post">{{ csrf() }}<div class="fld"><label for="email">Account email</label><input id="email" type="email" name="email" required></div>
+<button class="btn">Send reset link</button> <a href="{{ url_for('auth.login') }}">Back to sign in</a></form></div></div>{% endblock %}

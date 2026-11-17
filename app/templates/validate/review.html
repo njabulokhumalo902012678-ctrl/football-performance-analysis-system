@@ -1,0 +1,26 @@
+{% extends 'base.html' %}{% from '_macros.html' import csrf %}
+{% block body %}
+<div class="head"><div><h1>Validate: {{ m.home }} v {{ m.away }}</h1><p class="sub">{{ m.match_code }} &middot; {{ m.status|badge }} &middot; Official score: {{ (m.home_score ~ ' - ' ~ m.away_score) if m.home_score is not none else 'not entered' }} ({{ m.score_source or 'no source' }})</p></div>
+<div class="actions"><a class="btn ghost" href="{{ url_for('matches.detail', mid=m.id) }}">Match page</a><a class="btn ghost" href="{{ url_for('collect.entry', mid=m.id) }}">Events / corrections</a>
+<form method="post" action="{{ url_for('validate.recheck', mid=m.id) }}">{{ csrf() }}<button class="btn">Run checks</button></form></div></div>
+<div class="infobox">Data source: {{ source.name }} ({{ source.permission_status|label }}). Collected categories: {{ scope|join(', ') or 'none declared' }}.</div>
+<div class="grid g2">
+<div class="card"><h2>Issues ({{ open_errors }} errors, {{ open_warnings }} warnings open)</h2><div class="tw"><table>
+{% for i in issues %}<tr><td>{% if i.severity=='error' %}<span class="badge bad">Error</span>{% else %}<span class="badge warn">Warning</span>{% endif %}</td><td>{{ i.message }}{% if i.status!='open' %}<br><span class="muted">{{ i.status|label }}</span>{% endif %}</td>
+<td style="white-space:nowrap">{% if i.status=='open' and can_validate %}<form method="post" action="{{ url_for('validate.resolve_issue', mid=m.id, iid=i.id) }}" style="display:inline">{{ csrf() }}<button class="btn sm ghost" name="action" value="resolved">Resolved</button>{% if i.severity=='warning' %}<button class="btn sm ghost" name="action" value="ignored">Ignore</button>{% endif %}</form>{% endif %}</td></tr>
+{% else %}<tr><td class="muted">No issues recorded. Run the checks to be sure.</td></tr>{% endfor %}</table></div>
+{% if can_validate or can_return %}<div class="cb"><form method="post" action="{{ url_for('validate.add_issue', mid=m.id) }}" class="toolbar">{{ csrf() }}<input type="text" name="message" placeholder="Raise an issue" style="flex:1"><select name="severity"><option value="error">Error</option><option value="warning">Warning</option></select><button class="btn sm ghost">Add</button></form></div>{% endif %}</div>
+<div class="card"><h2>Decision</h2><div class="cb">
+{% if m.status in ('validation_required','data_submitted') %}
+{% if can_validate %}<form method="post" action="{{ url_for('validate.approve', mid=m.id) }}">{{ csrf() }}
+{% if open_warnings %}<label style="font-weight:400"><input type="checkbox" name="ack_warnings" value="1">Approve with {{ open_warnings }} open warning(s)</label>{% endif %}
+<button class="btn green" {{ 'disabled' if open_errors }}>Approve for analysis</button>{% if open_errors %} <span class="muted">Resolve all errors first.</span>{% endif %}</form><hr class="sep">{% endif %}
+{% if can_return %}<form method="post" action="{{ url_for('validate.send_back', mid=m.id) }}" data-confirm="Return this match to the collector?">{{ csrf() }}<div class="fld"><label>Return for correction - what must be fixed?</label><textarea name="note" rows="3" required></textarea></div><button class="btn danger">Return to collector</button></form>{% endif %}
+{% elif m.status=='data_validated' or m.status in C.VALIDATED_OR_LATER %}<p>This data is validated.{% if can_correct and m.status=='data_validated' %} It can be reopened by returning it with a reason.{% endif %}</p>
+{% if can_return and can_correct and m.status=='data_validated' %}<form method="post" action="{{ url_for('validate.send_back', mid=m.id) }}">{{ csrf() }}<input type="text" name="note" placeholder="Reason for reopening" required><button class="btn sm danger">Reopen</button></form>{% endif %}
+{% else %}<p class="muted">Waiting for the collector to submit the data.</p>{% endif %}</div></div></div>
+<div class="card"><h2>Lineups and appearances</h2><div class="tw"><table><tr><th>Team</th><th>Player</th><th>Role</th><th>On</th><th>Off</th><th>Sent off</th><th>Status</th><th>Verified</th></tr>
+{% for a in apps %}<tr><td>{{ a.team }}</td><td>{{ a.full_name }}</td><td>{{ a.role|label }}</td><td>{{ a.sub_on_minute if a.sub_on_minute is not none else '-' }}</td><td>{{ a.sub_off_minute if a.sub_off_minute is not none else '-' }}</td><td>{{ a.dismissed_minute if a.dismissed_minute is not none else '-' }}</td><td>{{ a.appearance_status|label }}{% if a.minutes_uncertain %} <span class="badge warn">uncertain</span>{% endif %}</td><td>{{ a.verification_status|badge }}</td></tr>{% else %}<tr><td colspan="8" class="muted">No lineup recorded.</td></tr>{% endfor %}</table></div></div>
+<div class="card"><h2>Events ({{ events|length }})</h2><div class="tw"><table><tr><th>#</th><th>Time</th><th>Team</th><th>Event</th><th>Player</th><th>Outcome</th><th>Status</th><th>By</th></tr>
+{% for e in events %}<tr><td>{{ e.id }}</td><td>{{ e.period }} {{ e.minute if e.minute is not none else '?' }}'</td><td>{{ e.team }}</td><td>{{ e.type_name }}</td><td>{{ e.player or '-' }}{% if e.related %}<br><span class="muted">with {{ e.related }}</span>{% endif %}</td><td>{{ e.outcome|label }}</td><td>{{ e.validation_status|badge }}</td><td>{{ e.collector or '-' }}</td></tr>{% endfor %}</table></div></div>
+{% endblock %}

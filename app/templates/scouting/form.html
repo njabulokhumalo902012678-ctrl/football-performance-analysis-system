@@ -1,0 +1,8 @@
+{% extends 'base.html' %}{% from '_macros.html' import field, csrf %}
+{% block body %}
+<div class="head"><h1>{{ 'Edit' if s else 'New' }} scouting record</h1></div>
+{% if errs %}<div class="errbox">Please fix the highlighted fields.</div>{% endif %}
+<div class="card"><div class="cb"><form method="post">{{ csrf() }}<div class="ff">{% for f in fields %}{{ field(f, s, form, errs) }}{% endfor %}</div>
+<div class="fld"><label>Matches observed (sample size = number ticked)</label>{% for m in matches %}<label style="font-weight:400"><input type="checkbox" name="matches" value="{{ m.id }}" {{ 'checked' if m.id in selected }}>{{ m.match_code }}: {{ m.h }} v {{ m.a }} ({{ m.kickoff|ldt('%d %b %Y') }})</label>{% endfor %}</div>
+<button class="btn green">Save</button> <a class="btn ghost" href="{{ url_for('scouting.scouting_list') }}">Cancel</a></form></div></div>
+{% endblock %}

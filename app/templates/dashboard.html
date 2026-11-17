@@ -1,0 +1,50 @@
+{% from '_macros.html' import csrf %}
+{% extends 'base.html' %}
+{% block body %}
+<div class="head"><div><h1>{{ title }}</h1><p class="sub">Signed in as {{ g.user.full_name }} &middot; {{ today }}</p></div></div>
+{% if cards %}<div class="stats">{% for c in cards %}
+  {% if c.href %}<a class="stat {{ c.tone }}" href="{{ c.href }}">{% else %}<div class="stat {{ c.tone }}">{% endif %}
+  <b>{{ c.value }}</b><span>{{ c.label }}</span>{% if c.sub %}<small>{{ c.sub }}</small>{% endif %}
+  {% if c.href %}</a>{% else %}</div>{% endif %}{% endfor %}</div>{% endif %}
+
+<div class="grid g2">
+{% macro match_table(rows, extra=False) %}
+<div class="tw"><table><tr><th>Match</th><th>Kick-off</th><th>Status</th>{% if extra %}<th>Deadline</th>{% endif %}</tr>
+{% for m in rows %}<tr><td><a href="{{ url_for('matches.detail', mid=m.id) }}">{{ m.home }} v {{ m.away }}</a><br><span class="muted">{{ m.match_code }}</span></td><td>{{ m.kickoff|ldt }}</td><td>{{ m.status|badge }}</td>{% if extra %}<td>{{ m.collection_deadline|ldt }}</td>{% endif %}</tr>
+{% else %}<tr><td colspan="4" class="muted">Nothing here.</td></tr>{% endfor %}</table></div>
+{% endmacro %}
+
+{% if panels.my_assignments is defined %}<div class="card"><h2>My collection assignments</h2>{{ match_table(panels.my_assignments, True) }}</div>{% endif %}
+{% if panels.delayed is defined %}<div class="card"><h2>Delayed collection</h2>{{ match_table(panels.delayed, True) }}</div>
+<div class="card"><h2>Upcoming matches without a collector</h2>{{ match_table(panels.unassigned) }}</div>
+<div class="card"><h2>Upcoming matches</h2>{{ match_table(panels.upcoming) }}</div>
+<div class="card"><h2>Data completeness (recent matches)</h2><div class="tw"><table><tr><th>Match</th><th>Lineups</th><th>Events</th><th>Scope</th><th>Open errors</th></tr>
+{% for r in panels.completeness %}<tr><td><a href="{{ url_for('matches.detail', mid=r.id) }}">{{ r.home }} v {{ r.away }}</a></td><td>{{ 'Yes' if r.apps else 'Missing' }}</td><td>{{ r.events }}</td><td>{{ 'Declared' if r.scopes else 'Missing' }}</td><td>{{ r.errors }}</td></tr>{% else %}<tr><td colspan="5" class="muted">No collected matches yet.</td></tr>{% endfor %}</table></div></div>{% endif %}
+{% if panels.validation_queue is defined %}<div class="card"><h2>Validation queue</h2><div class="tw"><table><tr><th>Match</th><th>Events</th><th>Status</th><th></th></tr>
+{% for m in panels.validation_queue %}<tr><td>{{ m.home }} v {{ m.away }}</td><td>{{ m.events }}</td><td>{{ m.status|badge }}</td><td><a href="{{ url_for('validate.review', mid=m.id) }}">Review</a></td></tr>{% else %}<tr><td colspan="4" class="muted">Nothing waiting for validation.</td></tr>{% endfor %}</table></div></div>{% endif %}
+{% if panels.my_reports is defined %}<div class="card"><h2>My reports</h2><div class="tw"><table><tr><th>Report</th><th>Status</th></tr>
+{% for r in panels.my_reports %}<tr><td><a href="{{ url_for('reports.detail', rid=r.id) }}">{{ r.title }}</a></td><td>{{ r.status|badge }}</td></tr>{% else %}<tr><td colspan="2" class="muted">No reports in progress.</td></tr>{% endfor %}</table></div></div>{% endif %}
+{% if panels.to_approve is defined %}<div class="card"><h2>Reports awaiting approval</h2><div class="tw"><table>
+{% for r in panels.to_approve %}<tr><td><a href="{{ url_for('reports.detail', rid=r.id) }}">{{ r.title }}</a></td><td>{{ r.report_type|label }}</td></tr>{% else %}<tr><td class="muted">Nothing awaiting approval.</td></tr>{% endfor %}</table></div></div>{% endif %}
+{% if panels.scouting_mine is defined %}<div class="card"><h2>My scouting records</h2><div class="tw"><table><tr><th>Player</th><th>Status</th><th>Confidence</th></tr>
+{% for s in panels.scouting_mine %}<tr><td><a href="{{ url_for('scouting.scouting_detail', sid=s.id) }}">{{ s.full_name }}</a></td><td>{{ s.review_status|badge }}</td><td>{{ s.confidence|label }}</td></tr>{% else %}<tr><td colspan="3" class="muted">No scouting records yet.</td></tr>{% endfor %}</table></div></div>
+<div class="card"><h2>Video library</h2><div class="cb"><dl class="kv"><dt>Videos</dt><dd>{{ panels.video_counts.videos }}</dd><dt>Clips tagged</dt><dd>{{ panels.video_counts.clips }}</dd><dt>Permission pending</dt><dd>{{ panels.video_counts.pending }}</dd></dl></div></div>{% endif %}
+{% if panels.tech is defined %}{% set t = panels.tech %}<div class="card"><h2>System health</h2><div class="cb"><dl class="kv">
+<dt>Last backup</dt><dd>{{ (t.last_backup.created_at|dt) if t.last_backup else 'No backup yet' }}</dd>
+<dt>Last restore test</dt><dd>{{ ((t.last_restore_test.created_at|dt) ~ ' - ' ~ t.last_restore_test.status) if t.last_restore_test else 'Never tested' }}</dd>
+<dt>Errors (7 days)</dt><dd><a href="{{ url_for('admin.errors') }}">{{ t.errors }}</a></dd><dt>Import problems</dt><dd><a href="{{ url_for('admin.imports') }}">{{ t.failed_imports }}</a></dd>
+<dt>Active employees</dt><dd>{{ t.users }}</dd><dt>Locked accounts</dt><dd>{{ t.locked }}</dd></dl></div></div>{% endif %}
+{% if panels.finance is defined %}{% set f = panels.finance %}<div class="card"><h2>Finance summary</h2><div class="cb"><dl class="kv">
+<dt>Income this month</dt><dd>{{ f.income_month|money }}</dd><dt>Expenses this month</dt><dd>{{ f.expenses_month|money }}</dd>
+<dt>Outstanding</dt><dd>{{ f.outstanding_total|money }} ({{ f.outstanding_count }} invoices)</dd><dt>Overdue invoices</dt><dd>{{ f.overdue|length }}</dd></dl>
+{% if f.detailed and f.overdue %}<hr class="sep"><table><tr><th>Invoice</th><th>Client</th><th>Due</th><th class="num">Balance</th></tr>{% for o in f.overdue %}<tr><td><a href="{{ url_for('business.invoice_detail', iid=o.id) }}">{{ o.invoice_number }}</a></td><td>{{ o.client }}</td><td>{{ o.due_date }}</td><td class="num">{{ o.bal|money }}</td></tr>{% endfor %}</table>{% endif %}</div></div>{% endif %}
+{% if panels.followups is defined %}<div class="card"><h2>Follow-ups due in 7 days</h2><div class="tw"><table>{% for f in panels.followups %}<tr><td>{{ f.kind }}</td><td>{{ f.name }}</td><td>{{ f.next_followup }}</td></tr>{% else %}<tr><td class="muted">No follow-ups due.</td></tr>{% endfor %}</table></div></div>{% endif %}
+{% if panels.workload is defined %}<div class="card"><h2>Staff workload</h2><div class="tw"><table><tr><th>Employee</th><th class="num">Open tasks</th><th class="num">Overdue</th></tr>
+{% for w in panels.workload %}<tr><td>{{ w.full_name }}</td><td class="num">{{ w.open_tasks or 0 }}</td><td class="num">{% if w.overdue %}<span class="badge bad">{{ w.overdue }}</span>{% else %}0{% endif %}</td></tr>{% endfor %}</table></div></div>
+<div class="card"><h2>Overdue tasks</h2><div class="tw"><table>{% for t in panels.overdue_tasks %}<tr><td>{{ t.title }}</td><td>{{ t.full_name }}</td><td>{{ t.due_date }}</td></tr>{% else %}<tr><td class="muted">No overdue tasks.</td></tr>{% endfor %}</table></div></div>{% endif %}
+{% if panels.audit is defined %}<div class="card"><div class="ch">Recent activity <a href="{{ url_for('admin.audit_log') }}">Audit log</a></div><div class="tw"><table>{% for a in panels.audit %}<tr><td>{{ a.created_at|dt }}</td><td>{{ a.full_name or '-' }}</td><td>{{ a.action }}</td></tr>{% endfor %}</table></div></div>{% endif %}
+{% if panels.tasks is defined %}<div class="card"><div class="ch">My tasks <a href="{{ url_for('business.tasks') }}">All tasks</a></div><div class="tw"><table><tr><th>Task</th><th>Priority</th><th>Due</th><th></th></tr>
+{% for t in panels.tasks %}<tr><td>{{ t.title }}</td><td>{{ t.priority|badge }}</td><td>{% if t.due_date and t.due_date < today %}<span class="badge bad">{{ t.due_date }}</span>{% else %}{{ t.due_date or '-' }}{% endif %}</td>
+<td><form method="post" action="{{ url_for('business.task_status', tid=t.id) }}">{{ csrf() }}<input type="hidden" name="status" value="done"><button class="btn sm ghost">Done</button></form></td></tr>{% else %}<tr><td colspan="4" class="muted">No open tasks.</td></tr>{% endfor %}</table></div></div>{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="head"><div><h1>Validation queue</h1><p class="sub">Submitted match data waiting for review.</p></div></div>
+<div class="card"><div class="tw"><table><tr><th>Match</th><th>Kick-off</th><th>Events</th><th>Errors</th><th>Warnings</th><th>Status</th><th></th></tr>
+{% for r in rows %}<tr><td><b>{{ r.home }} v {{ r.away }}</b><br><span class="muted">{{ r.match_code }}</span></td><td>{{ r.kickoff|ldt }}</td><td>{{ r.events }}</td><td>{{ r.errors }}</td><td>{{ r.warnings }}</td><td>{{ r.status|badge }}</td><td><a class="btn sm green" href="{{ url_for('validate.review', mid=r.id) }}">Review</a></td></tr>
+{% else %}<tr><td colspan="7" class="muted">Nothing is waiting for validation.</td></tr>{% endfor %}</table></div></div>
+{% endblock %}

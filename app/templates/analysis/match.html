@@ -1,0 +1,34 @@
+{% extends 'base.html' %}{% from '_macros.html' import csrf %}
+{% block body %}
+<div class="head"><div><h1>{{ m.home }} {{ (m.home_score ~ ' - ' ~ m.away_score) if m.home_score is not none else 'v' }} {{ m.away }}</h1><p class="sub">{{ m.match_code }} &middot; {{ m.kickoff|ldt }} &middot; {{ m.status|badge }}</p></div>
+<div class="actions">{% if can_run and valid %}<form method="post" action="{{ url_for('analysis.run', mid=m.id) }}">{{ csrf() }}<button class="btn">Store analysis run</button></form>{% endif %}
+{% if has_perm('report.create') and valid %}<a class="btn green" href="{{ url_for('reports.create', type='match') }}">Create report</a>{% endif %}</div></div>
+{% if prov %}<div class="warnbox"><b>PROVISIONAL data.</b> These figures come from events that have not been validated.</div>{% endif %}
+{% if res.quality %}<div class="card"><h2>Data quality</h2><div class="cb">{% for lvl, t in res.quality %}<p style="margin:0 0 4px"><span class="badge {{ 'bad' if lvl=='error' else 'warn' if lvl=='warning' else 'muted' }}">{{ lvl|label }}</span> {{ t }}</p>{% endfor %}</div></div>{% endif %}
+<div class="grid g2">
+<div class="card"><h2>Team statistics</h2><div class="tw"><table><tr><th>{{ m.home }}</th><th style="text-align:center">Statistic</th><th class="num">{{ m.away }}</th></tr>
+{% for label, h, a, note in team_rows %}<tr><td class="{{ 'nc' if h in ('Not collected','N/A') }}">{{ h }}</td><td style="text-align:center">{{ label }}</td><td class="num {{ 'nc' if a in ('Not collected','N/A') }}">{{ a }}</td></tr>{% endfor %}</table></div></div>
+<div><div class="card"><h2>Comparison chart</h2><div class="cb"><img src="{{ url_for('analysis.chart', mid=m.id, kind='teams', provisional=1 if prov else 0) }}" alt="Team comparison chart" style="max-width:100%" data-fallback="Not enough collected data to draw this chart."></div></div>
+<div class="card"><h2>Timeline</h2><div class="tw"><table>{% for e in timeline %}<tr><td>{{ e.minute if e.minute is not none else '?' }}'</td><td>{{ teams[e.team_id] }}</td><td>{{ e.code|label }}{% if e.outcome and e.code=='card' %} ({{ e.outcome|label }}){% endif %}</td><td>{{ names.get(e.player_id, '-') }}</td></tr>{% else %}<tr><td class="muted">No goals, cards or substitutions recorded.</td></tr>{% endfor %}</table></div></div></div></div>
+{% if has_coords %}<div class="grid g2"><div class="card"><h2>{{ m.home }} shot map</h2><div class="cb"><img src="{{ url_for('analysis.chart', mid=m.id, kind='shots_home', provisional=1 if prov else 0) }}" style="max-width:100%" alt="Shot map"></div></div>
+<div class="card"><h2>{{ m.away }} shot map</h2><div class="cb"><img src="{{ url_for('analysis.chart', mid=m.id, kind='shots_away', provisional=1 if prov else 0) }}" style="max-width:100%" alt="Shot map"></div></div></div>{% endif %}
+{% set prov_q = 1 if prov else 0 %}
+<div class="card"><h2>Advanced views (from collected pitch coordinates)</h2><div class="cb">
+{% if adv.home.heat or adv.away.heat or adv.home.net or adv.away.net %}
+<div class="grid g2">
+{% for key, name, tid in [('home', m.home, 'home'), ('away', m.away, 'away')] %}
+{% if adv[key].heat %}<div><b>{{ name }} - heat map</b><br><img style="max-width:100%" src="{{ url_for('analysis.chart', mid=m.id, kind='heat_' ~ key, provisional=prov_q) }}" alt="Heat map for {{ name }}"></div>{% endif %}
+{% if adv[key].net %}<div><b>{{ name }} - passing network</b><br><img style="max-width:100%" src="{{ url_for('analysis.chart', mid=m.id, kind='net_' ~ key, provisional=prov_q) }}" alt="Passing network for {{ name }}"></div>{% endif %}
+{% endfor %}</div>
+{% else %}<p class="muted" style="margin:0">Not available: heat maps need at least 15 located actions per team, and passing networks need completed passes with a start location and a recorded receiver.</p>{% endif %}
+<p class="muted" style="font-size:.8rem;margin-bottom:0">Heat maps show where recorded actions happened (density of collected events, not tracking data). Distance, speed and physical load are not measured and are never inferred.</p></div></div>
+<div class="card"><h2>Player statistics</h2><div class="tw"><table><tr><th>Player</th><th>Team</th>{% for h in headers %}<th class="num">{{ h }}</th>{% endfor %}</tr>
+{% for p in players %}<tr><td><a href="{{ url_for('analysis.player', pid=p.id) }}">{{ p.name }}</a>{% if p.heat %} <a href="{{ url_for('analysis.chart', mid=m.id, kind='heat_player', pid=p.id, provisional=prov_q) }}" target="_blank" class="muted" title="Player heat map">&#9679; heat</a>{% endif %}{% if p.status!='played' %} <span class="muted">({{ p.status|label }})</span>{% endif %}</td><td>{{ p.team }}</td>{% for c in p.cells %}<td class="num {{ 'nc' if c in ('Not collected','N/A') }}">{{ c }}</td>{% endfor %}</tr>{% endfor %}</table></div>
+<div class="cb muted" style="font-size:.82rem">"Not collected" means the event category was not recorded for this match. "N/A" means the formula cannot be calculated (e.g. unknown minutes or zero attempts). * = partial data.</div></div>
+<div class="card" id="notes"><h2>Analyst notes</h2><div class="cb">
+{% for n in notes %}<p style="margin:0 0 8px"><span class="badge {{ 'ok' if n.is_fact else 'info' }}">{{ 'Fact' if n.is_fact else n.note_type|label ~ ' (opinion)' }}</span> {{ n.body }} <span class="muted">- {{ n.author }}{% if n.player %}, re {{ n.player }}{% endif %}, {{ n.created_at|dt }}</span></p>{% else %}<p class="muted">No notes yet.</p>{% endfor %}
+{% if can_note %}<hr class="sep"><form method="post" action="{{ url_for('analysis.add_note', mid=m.id) }}">{{ csrf() }}<div class="ff"><div class="fld"><label>Type</label><select name="note_type">{% for v in ['observation','tactical','strength','development','training','recommendation','fact'] %}<option value="{{ v }}">{{ v|label }}{{ ' (recorded fact)' if v=='fact' else ' (opinion)' }}</option>{% endfor %}</select></div>
+<div class="fld"><label>Player (optional)</label><select name="player_id"><option value="">Team / match</option>{% for p in players %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select></div></div>
+<div class="fld"><textarea name="body" rows="3" required></textarea></div><button class="btn sm green">Save note</button></form>{% endif %}</div></div>
+{% if runs %}<div class="card"><h2>Stored analysis runs</h2><div class="tw"><table>{% for r in runs %}<tr><td>#{{ r.id }}</td><td>{{ r.created_at|dt }}</td><td>{{ r.full_name or '-' }}</td><td>{{ r.data_status|badge }}</td><td>{{ r.notes or '' }}</td></tr>{% endfor %}</table></div></div>{% endif %}
+{% endblock %}

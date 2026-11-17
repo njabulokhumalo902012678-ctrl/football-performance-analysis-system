@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="head"><div><h1>{{ group_title or 'Matches' }}</h1><p class="sub">{{ rows|length }} match{{ '' if rows|length==1 else 'es' }}</p></div>
+<div class="actions">{% if has_perm('export.csv') %}<a class="btn ghost" href="?export=csv{{ '&group='~group if group }}{{ '&status='~st if st }}">Export CSV</a>{% endif %}{% if has_perm('match.manage') %}<a class="btn green" href="{{ url_for('matches.create') }}">New fixture</a>{% endif %}</div></div>
+<form class="toolbar" method="get"><input type="text" name="q" value="{{ term }}" placeholder="Search team or code">
+<select name="status"><option value="">All statuses</option>{% for v,l in C.MATCH_STATUSES %}<option value="{{ v }}" {{ 'selected' if st==v }}>{{ l }}</option>{% endfor %}</select>
+{% if has_perm('events.collect') %}<label style="margin:0"><input type="checkbox" name="mine" value="1" {{ 'checked' if mine }}>Mine only</label>{% endif %}
+<button class="btn ghost">Filter</button>{% if group or st or term %}<a href="{{ url_for('matches.list_view') }}">Clear</a>{% endif %}</form>
+<div class="card"><div class="tw"><table><tr><th>Match</th><th>Kick-off</th><th>Venue</th><th>Collector</th><th>Score</th><th>Events</th><th>Status</th></tr>
+{% for m in rows %}<tr><td><a href="{{ url_for('matches.detail', mid=m.id) }}"><b>{{ m.home }} v {{ m.away }}</b></a><br><span class="muted">{{ m.match_code }}</span></td>
+<td>{{ m.kickoff|ldt }}{% if m.status in ('scheduled','assigned','ready_for_collection','collection_in_progress','corrections_required') and m.collection_deadline and m.collection_deadline < now %}<br><span class="badge bad">Deadline missed</span>{% endif %}</td>
+<td>{{ m.venue or '-' }}</td><td>{{ m.collector or '-' }}</td><td>{{ (m.home_score ~ ' - ' ~ m.away_score) if m.home_score is not none else '-' }}</td><td>{{ m.n_events }}</td><td>{{ m.status|badge }}</td></tr>
+{% else %}<tr><td colspan="7" class="muted">No matches found.</td></tr>{% endfor %}</table></div></div>
+{% endblock %}

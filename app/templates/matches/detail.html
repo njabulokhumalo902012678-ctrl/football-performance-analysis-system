@@ -1,0 +1,47 @@
+{% extends 'base.html' %}{% from '_macros.html' import csrf, post_btn %}
+{% block body %}
+<div class="head"><div><h1>{{ m.home }} v {{ m.away }}</h1><p class="sub">{{ m.match_code }} &middot; {{ m.kickoff|ldt }} &middot; {{ m.venue or 'Venue not set' }} &middot; {{ m.competition or 'No competition' }} {{ m.season or '' }}</p></div>
+<div class="actions">{{ m.status|badge }}
+{% if can_manage %}<a class="btn ghost" href="{{ url_for('matches.edit', mid=m.id) }}">Edit fixture</a>{% endif %}
+<a class="btn ghost" href="{{ url_for('matches.lineups', mid=m.id) }}">Lineups</a>
+{% if can_collect_here or has_perm('events.view') %}<a class="btn" href="{{ url_for('collect.entry', mid=m.id) }}">{{ 'Record events' if can_collect_here else 'View events' }}</a>{% endif %}
+{% if has_perm('events.validate','events.return') and m.status in ('validation_required','data_submitted','corrections_required') %}<a class="btn green" href="{{ url_for('validate.review', mid=m.id) }}">Validate</a>{% endif %}
+{% if has_perm('analysis.view') and m.status in C.VALIDATED_OR_LATER %}<a class="btn green" href="{{ url_for('analysis.match_view', mid=m.id) }}">Analysis</a>{% endif %}</div></div>
+
+<div class="grid g3">
+<div class="card"><h2>Collection status</h2><div class="cb"><dl class="kv"><dt>Events</dt><dd>{{ counts.events }} ({{ counts.drafts }} draft)</dd>
+<dt>Home lineup</dt><dd>{{ counts.home_squad or 'Missing' }}</dd><dt>Away lineup</dt><dd>{{ counts.away_squad or 'Missing' }}</dd>
+<dt>Deadline</dt><dd>{{ m.collection_deadline|ldt }}</dd><dt>Open errors</dt><dd>{{ counts.open_errors }}</dd><dt>Open warnings</dt><dd>{{ counts.open_warnings }}</dd><dt>Client</dt><dd>{{ m.client or '-' }}</dd></dl></div></div>
+<div class="card" id="assign"><h2>Assignments</h2><div class="tw"><table>{% for a in assigns %}<tr><td>{{ a.assignment_role|label }}</td><td>{{ a.full_name }}</td><td>{{ a.status|badge }}</td></tr>{% else %}<tr><td class="muted">No one assigned yet.</td></tr>{% endfor %}</table></div></div>
+<div class="card"><h2>Workflow</h2><div class="cb">
+{% if can_manage %}<form method="post" action="{{ url_for('matches.change_status', mid=m.id) }}">{{ csrf() }}<div class="fld"><label>Set status (planning stages)</label>
+<select name="status">{% for v,l in manual_statuses %}<option value="{{ v }}" {{ 'selected' if v==m.status }}>{{ l }}</option>{% endfor %}</select></div>
+<div class="fld"><input type="text" name="note" placeholder="Note (optional)"></div><button class="btn sm">Change status</button></form>
+<p class="muted" style="font-size:.8rem">Later stages are set automatically as data is submitted, validated, analysed and reported.</p>{% else %}<p class="muted">Status changes are made by the Operations Manager.</p>{% endif %}</div></div></div>
+
+<div class="grid g2">
+<div class="card" id="scope"><h2>Collection scope</h2><div class="cb">
+<p class="muted" style="margin-top:0">Tick the event categories that were fully collected. Anything unticked is reported as <b>Not collected</b> - never as zero.</p>
+<form method="post" action="{{ url_for('matches.save_scope', mid=m.id) }}">{{ csrf() }}
+{% for k,l in C.SCOPE_CATEGORIES %}<label style="font-weight:400"><input type="checkbox" name="scope" value="{{ k }}" {{ 'checked' if k in scope }} {{ '' if can_edit_collection else 'disabled' }}>{{ l }}</label>{% endfor %}
+{% if can_edit_collection %}<p><button class="btn sm green">Save scope</button></p>{% endif %}</form></div></div>
+<div class="card" id="result"><h2>Official result</h2><div class="cb">
+<form method="post" action="{{ url_for('matches.save_result', mid=m.id) }}">{{ csrf() }}<div class="ff">
+<div class="fld"><label>{{ m.home }} score</label><input type="number" min="0" name="home_score" value="{{ m.home_score if m.home_score is not none else '' }}" {{ '' if can_edit_collection else 'disabled' }}></div>
+<div class="fld"><label>{{ m.away }} score</label><input type="number" min="0" name="away_score" value="{{ m.away_score if m.away_score is not none else '' }}" {{ '' if can_edit_collection else 'disabled' }}></div>
+<div class="fld"><label>Score source</label><input type="text" name="score_source" value="{{ m.score_source or '' }}" placeholder="e.g. referee match sheet" {{ '' if can_edit_collection else 'disabled' }}></div>
+<div class="fld"><label>Attendance</label><input type="number" min="0" name="attendance" value="{{ m.attendance or '' }}" {{ '' if can_edit_collection else 'disabled' }}></div>
+<div class="fld"><label>Possession home (%)</label><input type="number" step="0.1" name="possession_home" value="{{ m.possession_home if m.possession_home is not none else '' }}" {{ '' if can_edit_collection else 'disabled' }}></div>
+<div class="fld"><label>Possession away (%)</label><input type="number" step="0.1" name="possession_away" value="{{ m.possession_away if m.possession_away is not none else '' }}" {{ '' if can_edit_collection else 'disabled' }}></div>
+<div class="fld full"><label>Possession source / method</label><input type="text" name="possession_source" value="{{ m.possession_source or '' }}" placeholder="Leave empty if possession was not measured" {{ '' if can_edit_collection else 'disabled' }}></div></div>
+{% if can_edit_collection %}<button class="btn sm green">Save result</button>{% endif %}</form></div></div></div>
+
+<div class="grid g2">
+<div class="card" id="checklist"><h2>Preparation checklist</h2><div class="cb">
+{% for c in checklist %}<form method="post" action="{{ url_for('matches.toggle_check', mid=m.id, iid=c.id) }}" style="margin-bottom:4px">{{ csrf() }}
+<label style="font-weight:400"><button class="pill {{ 'sel' if c.done }}" style="margin-right:8px">{{ '&#10003;'|safe if c.done else '&#9675;'|safe }}</button>{{ c.label }}{% if c.done %} <span class="muted">({{ c.full_name }})</span>{% endif %}</label></form>{% endfor %}
+{% if can_manage %}<form method="post" action="{{ url_for('matches.add_check', mid=m.id) }}" class="toolbar" style="margin-top:8px">{{ csrf() }}<input type="text" name="label" placeholder="Add checklist item"><button class="btn sm ghost">Add</button></form>{% endif %}</div></div>
+<div class="card"><h2>Status history</h2><div class="tw"><table><tr><th>When</th><th>Change</th><th>By</th></tr>
+{% for h in history %}<tr><td>{{ h.created_at|dt }}</td><td>{{ (h.old_status|label) ~ ' → ' ~ (h.new_status|label) }}{% if h.note %}<br><span class="muted">{{ h.note }}</span>{% endif %}</td><td>{{ h.full_name or 'System' }}</td></tr>{% endfor %}</table></div></div></div>
+{% if reports %}<div class="card"><h2>Reports for this match</h2><div class="tw"><table>{% for r in reports %}<tr><td><a href="{{ url_for('reports.detail', rid=r.id) }}">{{ r.title }}</a></td><td>{{ r.status|badge }}</td></tr>{% endfor %}</table></div></div>{% endif %}
+{% endblock %}

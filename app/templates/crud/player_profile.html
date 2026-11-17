@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="head"><div><h1>{{ p.full_name }}</h1><p class="sub">{{ p.position or 'Position not recorded' }} &middot; {{ p.team_name or 'No current team' }}</p></div>
+<div class="actions">{% if has_perm('analysis.view') %}<a class="btn ghost" href="{{ url_for('analysis.player', pid=p.id) }}">Performance analysis</a>{% endif %}{% if can_edit %}<a class="btn" href="{{ url_for('crud.edit', name='players', rid=p.id) }}">Edit</a>{% endif %}</div></div>
+<div class="grid g2"><div class="card"><h2>Profile</h2><div class="cb"><dl class="kv">
+<dt>Shirt number</dt><dd>{{ p.shirt_number or 'Not recorded' }}</dd><dt>Nationality</dt><dd>{{ p.nationality or 'Not recorded' }}</dd>
+<dt>Date of birth</dt><dd>{{ p.date_of_birth if show_dob else 'Not stored / not authorised' }}</dd>
+<dt>Preferred foot</dt><dd>{{ (p.preferred_foot|label) ~ ('' if p.foot_verified else ' (unverified)') if p.preferred_foot else 'Not recorded' }}</dd>
+<dt>Verification</dt><dd>{{ p.verification_status|badge }}</dd><dt>Source</dt><dd>{{ p.profile_source or 'Not recorded' }}</dd><dt>Last verified</dt><dd>{{ p.date_last_verified or 'Not recorded' }}</dd></dl></div></div>
+<div class="card"><h2>Team history</h2><div class="tw"><table><tr><th>Team</th><th>From</th><th>To</th><th>Shirt</th></tr>
+{% for h in history %}<tr><td>{{ h.team_name }}</td><td>{{ h.start_date or '-' }}</td><td>{{ h.end_date or 'current' }}</td><td>{{ h.shirt_number or '-' }}</td></tr>{% else %}<tr><td colspan="4" class="muted">No history recorded.</td></tr>{% endfor %}</table></div></div></div>
+<div class="card"><h2>Matches</h2><div class="tw"><table><tr><th>Match</th><th>Date</th><th>Role</th><th>Status</th></tr>
+{% for m in matches %}<tr><td><a href="{{ url_for('matches.detail', mid=m.id) }}">{{ m.home }} v {{ m.away }}</a></td><td>{{ m.kickoff|ldt }}</td><td>{{ m.role|label }}</td><td>{{ m.appearance_status|label }}</td></tr>{% else %}<tr><td colspan="4" class="muted">No appearances recorded.</td></tr>{% endfor %}</table></div></div>
+{% endblock %}

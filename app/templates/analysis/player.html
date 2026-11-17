@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="head"><div><h1>{{ p.full_name }}</h1><p class="sub">{{ p.position or '' }} &middot; {{ p.team or '' }} &middot; Performance across matches</p></div>
+{% if has_perm('report.create') %}<a class="btn green" href="{{ url_for('reports.create', type='player') }}">Create player report</a>{% endif %}</div>
+{% if prov %}<div class="warnbox">Includes provisional (unvalidated) matches.</div>{% endif %}
+<form class="toolbar" method="get">{% for m in ms %}<label style="font-weight:400;margin-right:8px"><input type="checkbox" name="m" value="{{ m.id }}" {{ 'checked' if (not picked or m.id in picked) }}>{{ m.match_code }} {{ m.home }} v {{ m.away }}</label>{% endfor %}<button class="btn sm ghost">Compare</button></form>
+{% if not consistent %}<div class="warnbox">These matches were collected with different event categories, so totals are marked partial (*) and trend charts are not drawn.</div>{% endif %}
+{% if not use %}<div class="card"><div class="cb muted">No validated appearances yet.</div></div>{% else %}
+<div class="card"><div class="tw"><table><tr><th>Metric</th>{% for m in use %}<th class="num">{{ m.match_code }}</th>{% endfor %}<th class="num">Total / overall</th></tr>
+{% for r in rows %}<tr><td>{{ r.label }}</td>{% for c in r.cells %}<td class="num {{ 'nc' if c in ('Not collected','N/A') }}">{{ c }}</td>{% endfor %}<td class="num {{ 'nc' if r.total in ('Not collected','N/A') }}"><b>{{ r.total }}</b>{% if r.note %}<br><span class="muted" style="font-size:.75rem">{{ r.note }}</span>{% endif %}</td></tr>{% endfor %}</table></div></div>
+{% if trend_ok %}<div class="grid g2"><div class="card"><h2>Goals per 90 trend</h2><div class="cb"><img style="max-width:100%" src="{{ url_for('analysis.player_trend', pid=p.id, code='goals_per90') }}" alt="trend" data-fallback="Not enough data for a trend."></div></div>
+<div class="card"><h2>Pass completion trend</h2><div class="cb"><img style="max-width:100%" src="{{ url_for('analysis.player_trend', pid=p.id, code='pass_completion') }}" alt="trend" data-fallback="Not enough data for a trend."></div></div></div>{% endif %}{% endif %}
+{% endblock %}

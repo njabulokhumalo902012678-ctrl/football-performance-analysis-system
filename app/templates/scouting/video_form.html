@@ -1,0 +1,7 @@
+{% extends 'base.html' %}{% from '_macros.html' import field, csrf %}
+{% block body %}
+<div class="head"><h1>Register video</h1></div>
+<div class="card"><div class="cb"><form method="post" enctype="multipart/form-data">{{ csrf() }}<div class="ff">{% for f in fields %}{{ field(f, none, form, errs) }}{% endfor %}
+<div class="fld full"><label>Upload file (optional)</label><input type="file" name="file" accept="video/*"><div class="help">Stored in protected storage, not in the database. Only people with video access can stream it.</div></div></div>
+<button class="btn green">Save</button> <a class="btn ghost" href="{{ url_for('scouting.videos') }}">Cancel</a></form></div></div>
+{% endblock %}

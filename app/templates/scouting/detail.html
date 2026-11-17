@@ -1,0 +1,11 @@
+{% extends 'base.html' %}{% from '_macros.html' import csrf %}
+{% block body %}
+<div class="head"><div><h1>{{ s.player }}</h1><p class="sub">{{ s.position_role or '' }} &middot; {{ s.review_status|badge }} &middot; Confidence: {{ s.confidence|label }} &middot; Sample: {{ ms|length }} match(es) &middot; by {{ s.analyst }}</p></div>
+<div class="actions">{% if can_manage and s.review_status!='approved' %}<a class="btn ghost" href="{{ url_for('scouting.scouting_edit', sid=s.id) }}">Edit</a>{% endif %}
+{% if can_manage and s.review_status in ('draft','returned') %}<form method="post" action="{{ url_for('scouting.scouting_status', sid=s.id) }}">{{ csrf() }}<input type="hidden" name="status" value="submitted"><button class="btn green">Submit for review</button></form>{% endif %}
+{% if can_review and s.review_status=='submitted' %}<form method="post" action="{{ url_for('scouting.scouting_status', sid=s.id) }}" style="display:inline">{{ csrf() }}<button name="status" value="approved" class="btn green">Approve</button> <button name="status" value="returned" class="btn danger">Return</button></form>{% endif %}</div></div>
+<div class="grid g2"><div class="card"><h2>Recorded facts</h2><div class="cb">{{ s.factual_evidence or '-' }}</div></div><div class="card"><h2>Matches observed</h2><div class="tw"><table>{% for m in ms %}<tr><td><a href="{{ url_for('matches.detail', mid=m.id) }}">{{ m.match_code }}: {{ m.h }} v {{ m.a }}</a></td></tr>{% else %}<tr><td class="muted">None linked.</td></tr>{% endfor %}</table></div></div></div>
+<div class="grid g2"><div class="card"><h2>Technical strengths (opinion)</h2><div class="cb">{{ s.technical_strengths or '-' }}</div></div><div class="card"><h2>Tactical strengths (opinion)</h2><div class="cb">{{ s.tactical_strengths or '-' }}</div></div>
+<div class="card"><h2>Development areas (opinion)</h2><div class="cb">{{ s.development_areas or '-' }}</div></div><div class="card"><h2>Decision-making (opinion)</h2><div class="cb">{{ s.decision_making or '-' }}</div></div></div>
+<div class="card"><h2>Recommendation (opinion)</h2><div class="cb">{{ s.recommendation or '-' }}<p class="muted">Video: {{ s.video_refs or 'none referenced' }}</p></div></div>
+{% endblock %}

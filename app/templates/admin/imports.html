@@ -1,0 +1,7 @@
+{% extends 'base.html' %}{% from '_macros.html' import csrf %}
+{% block body %}
+<div class="head"><h1>Data imports</h1></div>
+{% if can_import %}<div class="card"><h2>Import players (CSV)</h2><div class="cb"><p class="muted" style="margin-top:0">Columns: <code>full_name, position, team, shirt_number, nationality</code>. All-or-nothing: any invalid row rejects the file. Imported players are marked unverified.</p>
+<form method="post" enctype="multipart/form-data">{{ csrf() }}<input type="file" name="file" accept=".csv" required> <button class="btn green">Import</button></form></div></div>{% endif %}
+<div class="card"><h2>Import history</h2><div class="tw"><table><tr><th>When</th><th>Type</th><th>File</th><th>Rows</th><th>Failed</th><th>Status</th><th>By</th></tr>{% for j in jobs %}<tr><td>{{ j.created_at|dt }}</td><td>{{ j.job_type }}</td><td>{{ j.filename }}</td><td>{{ j.rows_ok }}/{{ j.rows_total }}</td><td>{{ j.rows_failed }}</td><td>{{ j.status|badge }}{% if j.errors %}<br><span class="muted" style="font-size:.75rem">{{ j.errors[:200] }}</span>{% endif %}</td><td>{{ j.full_name }}</td></tr>{% else %}<tr><td colspan="7" class="muted">No imports yet.</td></tr>{% endfor %}</table></div></div>
+{% endblock %}

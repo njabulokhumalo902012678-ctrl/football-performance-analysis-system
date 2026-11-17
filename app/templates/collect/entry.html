@@ -1,0 +1,55 @@
+{% extends 'base.html' %}{% from '_macros.html' import csrf %}
+{% block body %}
+<div class="collect">
+<div class="head"><div><h1>{{ m.home }} v {{ m.away }}</h1><p class="sub">{{ m.match_code }} &middot; {{ m.kickoff|ldt }} &middot; {{ m.status|badge }} &middot; {{ counts.total }} events ({{ counts.draft }} draft)</p></div>
+<div class="actions"><a class="btn ghost" href="{{ url_for('matches.detail', mid=m.id) }}">Match page</a><a class="btn ghost" href="{{ url_for('matches.lineups', mid=m.id) }}">Lineups</a></div></div>
+{% if not lineup_ready %}<div class="warnbox">Lineups are missing for one or both teams. Events can only be recorded for players in the lineup. <a href="{{ url_for('matches.lineups', mid=m.id) }}">Enter lineups</a>.</div>{% endif %}
+{% if not scope %}<div class="warnbox">Collection scope has not been declared. Tick the categories you are collecting on the <a href="{{ url_for('matches.detail', mid=m.id) }}#scope">match page</a> - anything not ticked will show as "Not collected".</div>{% endif %}
+{% if m.status == 'corrections_required' %}<div class="errbox">This match was returned for correction. Fix the events below, then submit again. See the match history for the reviewer's note.</div>{% endif %}
+
+{% if editable %}
+<div class="warnbox hide" id="pending"><b><span id="pendcount">0</span> event(s) are stored on this phone and not yet saved to the server.</b> <button type="button" class="btn sm" id="syncnow">Sync now</button></div>
+<div class="card"><h2 id="formtitle">Record an event</h2><div class="cb" id="evform">
+  <div class="fld"><label>1. Team</label><div class="pill-row" id="teams">{% for tid, tname in teams.items() %}<button type="button" class="pill" data-team="{{ tid }}">{{ tname }}</button>{% endfor %}</div></div>
+  <div class="fld"><label>2. Event</label><div class="types" id="types"></div></div>
+  <div class="fld" id="playerbox"><label>3. <span id="playerlabel">Player</span></label><div class="players" id="players"></div></div>
+  <div class="fld hide" id="outbox"><label>Outcome</label><div class="pill-row" id="outcomes"></div></div>
+  <div class="ff">
+    <div class="fld hide" id="relbox"><label id="rellabel">Related player</label><select id="related"></select></div>
+    <div class="fld hide" id="spbox"><label>Set piece</label><select id="setpiece"><option value="">Open play / none</option>{% for s in set_pieces %}<option value="{{ s }}">{{ s|label }}</option>{% endfor %}</select></div>
+  </div>
+  <div class="grid g3" style="gap:10px">
+    <div class="fld"><label for="period">Period</label><select id="period">{% for v,l in periods %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></div>
+    <div class="fld"><label for="minute">Minute</label><input id="minute" type="number" inputmode="numeric" min="0" max="150"></div>
+    <div class="fld"><label for="second">Second (optional)</label><input id="second" type="number" inputmode="numeric" min="0" max="59"></div>
+  </div>
+  <div class="fld hide" id="pitchbox"><label>Pitch location <span class="muted" id="pitchhelp"></span></label>
+    <div class="pitch" id="pitch"><div class="mid"></div><div class="circ"></div><div class="boxl"></div><div class="boxr"></div></div>
+    <div class="help">Record from the point of view of the team in possession, attacking to the right. <button type="button" class="btn sm ghost" id="clearpitch">Clear</button></div></div>
+  <details><summary class="muted" style="cursor:pointer;margin-bottom:8px">More details (video time, notes)</summary>
+    <div class="fld"><label for="vts">Video timestamp (seconds)</label><input id="vts" type="number" min="0"></div>
+    <div class="fld"><label for="notes">Notes</label><textarea id="notes" rows="2"></textarea></div></details>
+  <div class="fld hide" id="reasonbox"><label for="reason">Reason for correction *</label><input id="reason" type="text" placeholder="Why is this event being changed?"></div>
+  <div class="toolbar"><button type="button" class="btn green" id="save">Save as draft</button><button type="button" class="btn ghost hide" id="cancelEdit">Cancel edit</button></div>
+</div></div>
+{% endif %}
+
+<div class="card"><h2>Recent events</h2><div class="tw"><table><tr><th>Time</th><th>Event</th><th>Player</th><th>Status</th><th></th></tr>
+{% for e in events %}<tr><td>{{ e.period }} {{ e.minute if e.minute is not none else '?' }}'</td><td>{{ e.type_name }}{% if e.outcome %} <span class="muted">({{ e.outcome|label }})</span>{% endif %}</td>
+<td>{{ e.player or '-' }}{% if e.related %}<br><span class="muted">with {{ e.related }}</span>{% endif %}</td><td>{{ e.validation_status|badge }}</td>
+<td style="white-space:nowrap">{% if editable and (e.validation_status in ('draft','returned') or can_correct) %}<button class="btn sm ghost" data-edit="{{ e.id }}">Edit</button>
+<form method="post" action="{{ url_for('collect.delete_event', mid=m.id, eid=e.id) }}" style="display:inline" data-confirm="Delete this event?">{{ csrf() }}{% if e.validation_status!='draft' %}<input type="text" name="reason" placeholder="Reason" style="width:110px">{% endif %}<button class="btn sm danger">Delete</button></form>{% endif %}</td></tr>
+{% else %}<tr><td colspan="5" class="muted">No events recorded yet.</td></tr>{% endfor %}</table></div></div>
+
+{% if can_submit %}
+<div class="grid g2">
+<div class="card"><h2>Submit for validation</h2><div class="cb"><p class="muted" style="margin-top:0">When the match is complete, submit all draft events. An analyst will validate them. You will not be able to edit them afterwards unless they are returned.</p>
+<form method="post" action="{{ url_for('collect.submit', mid=m.id) }}" data-confirm="Submit all events for validation?">{{ csrf() }}<button class="btn green">Submit {{ counts.draft }} draft event{{ '' if counts.draft==1 else 's' }}</button></form></div></div>
+<div class="card"><h2>Paper / CSV fallback</h2><div class="cb"><p class="muted" style="margin-top:0">No signal? Record on paper or in a spreadsheet and upload it later.</p>
+<p><a class="btn sm ghost" href="{{ url_for('collect.csv_template', mid=m.id) }}">Download CSV template</a></p>
+<form method="post" action="{{ url_for('collect.csv_import', mid=m.id) }}" enctype="multipart/form-data">{{ csrf() }}<input type="file" name="file" accept=".csv" required> <button class="btn sm">Upload as drafts</button></form></div></div></div>
+{% endif %}
+</div>
+<script type="application/json" id="cfg">{{ cfg|safe }}</script>
+<script src="{{ url_for('static', filename='js/collect.js') }}"></script>
+{% endblock %}

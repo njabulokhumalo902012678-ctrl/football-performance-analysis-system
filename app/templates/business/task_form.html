@@ -1,0 +1,5 @@
+{% extends 'base.html' %}{% from '_macros.html' import field, csrf %}
+{% block body %}
+<div class="head"><h1>{{ 'Edit' if t else 'New' }} task</h1></div>
+<div class="card"><div class="cb"><form method="post">{{ csrf() }}<div class="ff">{% for f in fields %}{{ field(f, t, form, errs) }}{% endfor %}</div><button class="btn green">Save task</button> <a class="btn ghost" href="{{ url_for('business.tasks') }}">Cancel</a></form></div></div>
+{% endblock %}

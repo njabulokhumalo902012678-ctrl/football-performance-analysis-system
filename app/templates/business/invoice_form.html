@@ -1,0 +1,15 @@
+{% extends 'base.html' %}{% from '_macros.html' import csrf %}
+{% block body %}
+<div class="head"><h1>New invoice</h1></div>
+<form method="post">{{ csrf() }}<div class="card"><div class="cb"><div class="ff">
+<div class="fld"><label>Client *</label><select name="client_id" required><option value="">- choose -</option>{% for c in clients %}<option value="{{ c.id }}" {{ 'selected' if form and form.get('client_id')==c.id|string }}>{{ c.name }}</option>{% endfor %}</select></div>
+<div class="fld"><label>Accepted proposal (optional)</label><select name="proposal_id"><option value="">-</option>{% for p in proposals %}<option value="{{ p.id }}">{{ p.title }}</option>{% endfor %}</select></div>
+<div class="fld"><label>Issue date *</label><input type="date" name="issue_date" value="{{ form.get('issue_date') if form else today }}" required></div>
+<div class="fld"><label>Due date *</label><input type="date" name="due_date" value="{{ form.get('due_date') if form else '' }}" required></div>
+<div class="fld"><label>Tax rate (%)</label><input type="number" step="0.01" id="tax_rate" name="tax_rate" value="{{ form.get('tax_rate') if form else default_tax }}"></div>
+<div class="fld"><label>Notes</label><input type="text" name="notes" value="{{ form.get('notes','') if form else '' }}"></div></div></div></div>
+<div class="card"><h2>Lines</h2><div class="tw"><table><tr><th>Service</th><th>Description</th><th>Qty</th><th>Unit price</th></tr><tbody id="lines">
+<tr><td><select name="service"><option value="">-</option>{% for s in services %}<option value="{{ s.id }}" data-price="{{ s.unit_price }}" data-name="{{ s.name }}">{{ s.name }}</option>{% endfor %}</select></td><td><input type="text" name="desc"></td><td><input type="number" step="any" name="qty" value="1" style="width:80px"></td><td><input type="number" step="0.01" name="price" style="width:120px"></td></tr></tbody></table></div>
+<div class="cb"><button type="button" class="btn sm ghost" data-addrow="lines">Add line</button> <span style="margin-left:16px">Total incl. tax: <b id="invtotal">0.00</b></span></div></div>
+<button class="btn green">Create invoice</button> <a class="btn ghost" href="{{ url_for('business.invoices') }}">Cancel</a></form>
+{% endblock %}

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}{{ title|default('Dashboard') }}{% endblock %} - {{ company_name }}</title>
+<link rel="icon" href="{{ url_for('static', filename='img/logo.svg') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head><body>
+{% from '_macros.html' import csrf %}
+{% set ep = request.endpoint or '' %}
+{% macro nav(endpoint, label, match=None) %}<a href="{{ url_for(endpoint) }}" class="{{ 'on' if (match or endpoint) in ep or request.path==url_for(endpoint) }}">{{ label }}</a>{% endmacro %}
+<div class="layout">
+<aside class="side" id="side">
+  <div class="brand"><img src="{{ url_for('static', filename='img/logo.svg') }}" alt=""><div><b>Football Data &amp; Performance Analysis</b><span>{{ company_tagline }}</span></div></div>
+  <nav>
+  {% if g.user and not is_client() %}
+    {{ nav('dashboard.home','Dashboard') }}
+    {% if has_perm('events.collect') %}<h6>Collection</h6>{{ nav('collect.my_matches','My assignments','collect.') }}{% endif %}
+    {% if has_perm('match.view') %}<h6>Operations</h6>{{ nav('matches.list_view','Matches','matches.') }}
+      {% if has_perm('match.manage') %}{{ nav('matches.create','New fixture') }}{% endif %}{% endif %}
+    {% if has_perm('events.validate','events.return') %}{{ nav('validate.queue','Validation queue','validate.') }}{% endif %}
+    {% if has_perm('analysis.view') %}<h6>Analysis</h6>{{ nav('analysis.index','Match analysis','analysis.') }}{{ nav('analysis.metrics','Metric definitions') }}{% endif %}
+    {% if has_perm('report.view','report.create','report.approve') %}{{ nav('reports.list_view','Reports','reports.') }}{% endif %}
+    {% if has_perm('video.view','scouting.view') %}<h6>Video and scouting</h6>
+      {% if has_perm('video.view') %}{{ nav('scouting.videos','Video library','scouting.video') }}{% endif %}
+      {% if has_perm('scouting.view') %}{{ nav('scouting.scouting_list','Scouting reports','scouting.scouting') }}{% endif %}{% endif %}
+    {% if has_perm('football.view') %}<h6>Football records</h6>
+      {% for k,l in [('clubs','Clubs'),('teams','Teams'),('players','Players'),('competitions','Competitions'),('seasons','Seasons'),('venues','Venues'),('data_sources','Data sources')] %}
+        <a href="{{ url_for('crud.list_view', name=k) }}" class="{{ 'on' if request.path.startswith('/e/'~k) }}">{{ l }}</a>{% endfor %}{% endif %}
+    {% if has_perm('clients.view','marketing.manage','finance.view') %}<h6>Business</h6>
+      {% if has_perm('clients.view') %}<a href="{{ url_for('crud.list_view', name='clients') }}" class="{{ 'on' if request.path.startswith('/e/clients') or request.path.startswith('/clients') }}">Clients</a>{{ nav('business.requests','Client requests') }}{% endif %}
+      {% if has_perm('marketing.manage') %}{{ nav('business.marketing','Marketing') }}<a href="{{ url_for('crud.list_view', name='leads') }}">Prospects</a><a href="{{ url_for('crud.list_view', name='campaigns') }}">Campaigns</a>{% endif %}
+      {% if has_perm('finance.view') %}{{ nav('business.finance_home','Finance','business.finance') }}{{ nav('business.invoices','Invoices') }}<a href="{{ url_for('crud.list_view', name='expenses') }}">Expenses</a><a href="{{ url_for('crud.list_view', name='proposals') }}">Proposals</a><a href="{{ url_for('crud.list_view', name='services') }}">Services</a>{% endif %}{% endif %}
+    {% if has_perm('tasks.own','tasks.view_all') %}<h6>Work</h6>{{ nav('business.tasks','Tasks','business.task') }}{% endif %}
+    {% if has_perm('users.manage','system.admin','audit.view','settings.strategic') %}<h6>Administration</h6>
+      {% if has_perm('users.manage') %}{{ nav('admin.users','Users') }}{% endif %}
+      {% if has_perm('users.manage','audit.view') %}{{ nav('admin.roles_matrix','Roles and permissions') }}{% endif %}
+      {% if has_perm('settings.strategic','system.admin') %}{{ nav('admin.settings','Settings') }}{% endif %}
+      {% if has_perm('audit.view') %}{{ nav('admin.audit_log','Audit log') }}{% endif %}
+      {% if has_perm('system.admin') %}{{ nav('admin.backups','Backups') }}{{ nav('admin.errors','Error log') }}{% endif %}
+      {% if has_perm('import.data','system.admin') %}{{ nav('admin.imports','Imports') }}{% endif %}{% endif %}
+  {% elif g.user %}{{ nav('portal.home','My reports') }}{% endif %}
+  </nav>
+  {% if g.user %}<div class="userbox"><b>{{ g.user.full_name }}</b><br><span class="muted" style="color:#9fb6d9">{{ primary_role() and C.ROLES[primary_role()].name or ('Client' if is_client() else '') }}</span><br>
+    <a href="{{ url_for('auth.change_password') }}">Change password</a> &middot;
+    <form method="post" action="{{ url_for('auth.logout') }}" style="display:inline">{{ csrf() }}<button style="background:none;border:0;color:#bcd2f5;cursor:pointer;padding:0;font:inherit;text-decoration:underline">Sign out</button></form></div>{% endif %}
+</aside>
+<div class="main">
+  <div class="top"><button id="navtoggle" aria-label="Menu">&#9776;</button><b>{{ company_name }}</b></div>
+  <main class="content">
+    {% with msgs = get_flashed_messages(with_categories=true) %}{% for cat, m in msgs %}<div class="flash {{ cat }}" role="status">{{ m }}</div>{% endfor %}{% endwith %}
+    {% block body %}{% endblock %}
+  </main>
+</div></div>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body></html>
